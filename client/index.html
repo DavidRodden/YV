@@ -1,0 +1,133 @@
+<div id="gameBar" align="center">
+    <img src="/client/img/YV.png">
+</div>
+<div id="signDiv" style="font-family: Garamond; font-size: large; margin-top: 15%; color: white;" align="center">
+    Display name: <input id="signDiv-displayName" type="text">
+    <button id="signDiv-signIn">Join</button>
+</div>
+<style type="text/css">
+    canvas {
+        position: absolute;
+        width: 80%;
+        height: 80%;
+        left: 10%;
+        background-color: red;
+    }
+</style>
+<div id="gameDiv" style="display:none;" align="center">
+    <canvas id="ctx" width="1000" height="500"
+            style="border: 3px solid rebeccapurple;"></canvas>
+</div>
+<body bgcolor="black"></body>
+
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script>
+    var socket = io();
+    var signDiv = document.getElementById('signDiv');
+    var signDivDisplayName = document.getElementById('signDiv-displayName');
+    var signDivSignIn = document.getElementById('signDiv-signIn');
+    var gameDiv = document.getElementById('gameDiv');
+
+    signDivSignIn.onclick = function () {
+        socket.emit('signIn', {displayName: signDivDisplayName.value});
+    };
+    socket.on('signInResponse', function (data) {
+        if (!data.success) {
+            alert("You must fill out a name before continuing...");
+            return;
+        }
+        signDiv.style.display = 'none';
+        gameDiv.style.display = 'inline-block';
+    });
+
+    var Img = {};
+    Img.player = new Image();
+    Img.player.src = '/client/img/YV.png';
+
+    var ctx = document.getElementById("ctx").getContext("2d");
+
+    var Player = function (initPack) {
+        var self = {};
+        self.id = initPack.id;
+        self.x = initPack.x;
+        self.y = initPack.y;
+        self.name = initPack.name;
+        self.color = initPack.color;
+        self.draw = function () {
+            ctx.fillStyle = self.color;
+            ctx.fillRect(self.x - 20, self.y - 30, 40, 60);
+            ctx.strokeStyle = 'black';
+            ctx.strokeRect(self.x - 20, self.y - 30, 40, 60);
+            ctx.fillStyle = 'blue';
+            var nameSize = ctx.measureText(self.name);
+            ctx.fillText(self.name, self.x - nameSize.width / 2, self.y + 60);
+        };
+        Player.list[self.id] = self;
+        return self;
+    };
+    Player.list = {};
+
+    var selfId = null;
+
+    socket.on('init', function (data) {
+        if (data.selfId) selfId = data.selfId;
+        console.log("Player length: " + data.length + " or " + data.player.length);
+        for (var i = 0; i < data.player.length; i++) {
+            console.log("Player added");
+            new Player(data.player[i]);
+        }
+    });
+
+    socket.on('update', function (data) {
+        console.log("active");
+        for (var i = 0; i < data.length; i++) {
+            var pack = data[i];
+            var p = Player.list[pack.id];
+            if (!p)  return;
+            if (pack.x !== undefined)   p.x = pack.x;
+            if (pack.y !== undefined)   p.y = pack.y;
+        }
+    });
+
+    socket.on('remove', function (data) {
+        for (var i = 0; i < data.player.length; i++) delete Player.list[data.player[i]];
+    });
+
+    setInterval(function () {
+        ctx.clearRect(0, 0, 1000, 500);
+        ctx.fillStyle = '#e2edff';
+        ctx.fillRect(0, 0, 1000, 500);
+        ctx.font = '15px Verdana';
+        ctx.fillStyle = "black";
+        ctx.fillText("Current players online: " + Object.keys(Player.list).length, 20, 20);
+        ctx.font = '20px Courier New Italic';
+        ctx.beginPath();
+        ctx.moveTo(0, 280);
+        ctx.lineTo(1000, 280);
+        ctx.closePath();
+        ctx.stroke();
+        for (var i in Player.list) {
+            Player.list[i].draw();
+        }
+    }, 40);
+
+    socket.on('evalAnswer', function (data) {
+        console.log(data);
+    });
+    document.onkeydown = function (event) {
+        if (event.keyCode === 39)
+            socket.emit('keyPress', {inputId: 'right', state: true});
+        else if (event.keyCode === 37)
+            socket.emit('keyPress', {inputId: 'left', state: true});
+        else if (event.keyCode === 38)
+            socket.emit('keyPress', {inputId: 'up', state: true});
+    };
+    document.onkeyup = function (event) {
+        if (event.keyCode === 39)
+            socket.emit('keyPress', {inputId: 'right', state: false});
+        else if (event.keyCode === 37)
+            socket.emit('keyPress', {inputId: 'left', state: false});
+        else if (event.keyCode === 38)
+            socket.emit('keyPress', {inputId: 'up', state: false});
+    };
+</script>
