@@ -2,14 +2,13 @@ var express = require('express');
 var app = express();
 var serv = require('http').Server(app);
 var crypto = require('crypto');
-var tmx = require('tmx-parser');
 
 app.get('/', function (req, res) {
     res.sendfile(__dirname + '/client/index.html');
 });
 app.use('/client', express.static(__dirname + '/client'));
 //process.env.PORT
-serv.listen(2000);
+serv.listen(process.env.PORT || 2000);
 console.log("Server started");
 
 // tmx.parse('/client/img/map.tmx', function (err, map) {
