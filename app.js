@@ -39,7 +39,7 @@ var Player = function (id, name) {
         xVelocity: 0,
         yVelocity: 0,
         maxXVelocity: 10,
-        maxYVelocity: 20,
+        maxYVelocity: 25,
         xAcceleration: 1,
         yAcceleration: 2,
         id: id,
@@ -52,16 +52,19 @@ var Player = function (id, name) {
     };
     self.updatePosition = function () {
         if (Math.abs(self.xVelocity) < self.maxXVelocity) {
-            if (self.pressingRight)  self.xVelocity += self.xAcceleration;
-            if (self.pressingLeft)   self.xVelocity -= self.xAcceleration;
+            if (self.pressingRight && self.x < 980)  self.xVelocity += self.xAcceleration;
+            if (self.pressingLeft && self.x > 20)   self.xVelocity -= self.xAcceleration;
         }
         if (!(self.pressingRight || self.pressingLeft) || (self.pressingRight && self.xVelocity < 0) || (self.pressingLeft && self.xVelocity > 0))
             self.xVelocity += (self.xVelocity > 0) ? -self.xAcceleration : (self.xVelocity < 0) ? self.xAcceleration : 0;
         if (self.y < 250)  self.yVelocity += self.yAcceleration;
         else self.yVelocity = 0;
         if (self.pressingUp && self.yVelocity == 0 && self.y >= 250) self.yVelocity -= self.maxYVelocity;
+        if (self.x >= 980 && self.xVelocity > 0) self.xVelocity = 0;
+        if (self.x <= 20 && self.xVelocity < 0)  self.xVelocity = 0;
         self.x += self.xVelocity;
         self.y += self.yVelocity;
+
     };
     self.getInitPack = function () {
         return {
