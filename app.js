@@ -48,7 +48,8 @@ var Player = function (id, name) {
         pressingRight: false,
         pressingLeft: false,
         pressingUp: false,
-        pressingDown: false
+        pressingDown: false,
+        score: 0
     };
     self.updatePosition = function () {
         if (Math.abs(self.xVelocity) < self.maxXVelocity) {
@@ -64,7 +65,10 @@ var Player = function (id, name) {
         if (self.x <= 20 && self.xVelocity < 0)  self.xVelocity = 0;
         self.x += self.xVelocity;
         self.y += self.yVelocity;
-
+        if (self.yVelocity != 0) {
+            self.score++;
+            console.log("UPDATE SCORE: " + self.score);
+        }  //score increase for testing pursposes
     };
     self.getInitPack = function () {
         return {
@@ -81,7 +85,8 @@ var Player = function (id, name) {
             x: self.x,
             y: self.y,
             name: self.name,
-            color: self.color
+            color: self.color,
+            score: self.score
         };
     };
     Player.list[id] = self;
