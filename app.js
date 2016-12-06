@@ -65,10 +65,7 @@ var Player = function (id, name) {
         if (self.x <= 20 && self.xVelocity < 0)  self.xVelocity = 0;
         self.x += self.xVelocity;
         self.y += self.yVelocity;
-        if (self.yVelocity != 0) {
-            self.score++;
-            console.log("UPDATE SCORE: " + self.score);
-        }  //score increase for testing pursposes
+        if (self.yVelocity != 0)    self.score++;//score increase for testing pursposes
     };
     self.getInitPack = function () {
         return {
