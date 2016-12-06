@@ -62,9 +62,21 @@
         self.score = 0;
         self.draw = function () {
             ctx.fillStyle = self.color;
-            ctx.fillRect(self.x - 20, self.y - 30, 40, 60);
+            var x = self.x - 20, y = self.y - 30, width = 40, height = 60, radius = 5;
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
             ctx.strokeStyle = 'black';
-            ctx.strokeRect(self.x - 20, self.y - 30, 40, 60);
             ctx.fillStyle = 'blue';
             var nameSize = ctx.measureText(self.name);
             ctx.fillText(self.name, self.x - nameSize.width / 2, self.y + 60);
