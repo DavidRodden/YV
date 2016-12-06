@@ -32,6 +32,33 @@ var Message = function (id, name, content) {
         };
     };
 };
+
+var Box = function (id) {
+    var self = {
+        x: 800,
+        y: 250,
+        xVelocity: -10,
+        yVelocity: 0,
+        id: id,
+        color: "#" + crypto.randomBytes(3).toString('hex')
+    };
+    self.updatePosition = function () {
+        self.x -= self.xVelocity;
+    };
+    self.getUpdatePack = function () {
+        return {
+            id: self.id,
+            color: self.color,
+            x: self.x,
+            y: self.y
+        };
+    }
+    Box.list[id] = self;
+    initPack.box.push(self.getInitPack());
+    return self;
+};
+
+Box.list = {};
 var Player = function (id, name) {
     var self = {
         x: 250,
@@ -127,7 +154,15 @@ Player.update = function () {
     }
     return pack;
 };
-
+Box.update = function () {
+    var pack = [];
+    for (var i in Box.list) {
+        var box = Box.list[i];
+        box.updatePosition();
+        box.push(box.getUpdatePack());
+    }
+    return pack;
+};
 var DEBUG = true;
 var io = require('socket.io')(serv, {});
 io.sockets.on('connection', function (socket) {
@@ -151,17 +186,20 @@ io.sockets.on('connection', function (socket) {
     });
 });
 
-var initPack = {player: []};
+var initPack = {player: [], box: []};
 var removePack = {player: []};
 
 setInterval(function () {
-    var pack = Player.update();
+    var playerPack = Player.update();
+    var boxPack = Box.update();
     for (var i in socketList) {
         var socket = socketList[i];
         socket.emit('init', initPack);
-        socket.emit('update', pack);
+        socket.emit('updatePlayer', playerPack);
+        socket.emit('updateBox', boxPack);
         socket.emit('remove', removePack);
     }
     initPack.player = [];
+    initPack.box = [];
     removePack.player = [];
 }, 40);
