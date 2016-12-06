@@ -85,7 +85,6 @@
     });
 
     socket.on('update', function (data) {
-        console.log("active");
         for (var i = 0; i < data.length; i++) {
             var pack = data[i];
             var p = Player.list[pack.id];
@@ -114,8 +113,20 @@
         ctx.closePath();
         ctx.stroke();
         ctx.drawImage(Img.grassTiles, 0 - timeRunning % 70, 280);
-        for (var i in Player.list) {
-            Player.list[i].draw();
+        ctx.fillText("Top Current Players:", 750, 20);
+        var topPlayers = [];
+        for (var current in Player.list) {
+            Player.list[current].draw();
+            topPlayers.push(Player.list[current]);
+        }
+        topPlayers.sort(function (a, b) {
+            //sorts by name - can change this to score
+            return a.name > b.name;
+        });
+        var iterator = 0;
+        for (var current in topPlayers) {
+            iterator++;
+            if (current < 5) ctx.fillText(iterator + ". " + topPlayers[current].name + ":\t\t" + 0, 750, (iterator * 17) + 25);
         }
 
     }, 40);
