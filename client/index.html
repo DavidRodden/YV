@@ -28,6 +28,12 @@
     var signDivSignIn = document.getElementById('signDiv-signIn');
     var gameDiv = document.getElementById('gameDiv');
 
+    var id = 0;
+    var Message = function (initPack) {
+        var self = {};
+
+    };
+    Message.list = {};
     signDivSignIn.onclick = function () {
         socket.emit('signIn', {displayName: signDivDisplayName.value});
     };
@@ -41,11 +47,11 @@
     });
 
     var Img = {};
-    Img.player = new Image();
-    Img.player.src = '/client/img/YV.png';
+    Img.grassTiles = new Image();
+    Img.grassTiles.src = '/client/img/grassTiles.png';
 
     var ctx = document.getElementById("ctx").getContext("2d");
-
+    var timeRunning = 0;
     var Player = function (initPack) {
         var self = {};
         self.id = initPack.id;
@@ -87,6 +93,7 @@
             if (pack.x !== undefined)   p.x = pack.x;
             if (pack.y !== undefined)   p.y = pack.y;
         }
+        timeRunning += 8;
     });
 
     socket.on('remove', function (data) {
@@ -106,9 +113,11 @@
         ctx.lineTo(1000, 280);
         ctx.closePath();
         ctx.stroke();
+        ctx.drawImage(Img.grassTiles, 0 - timeRunning % 70, 280);
         for (var i in Player.list) {
             Player.list[i].draw();
         }
+
     }, 40);
 
     socket.on('evalAnswer', function (data) {
