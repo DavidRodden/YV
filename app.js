@@ -1,38 +1,35 @@
+/*
+All the dependencies required to use nodeJs.
+Also, use of crypto for extra randomness when generating colors for players and boxes.
+ */
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app);
 var crypto = require('crypto');
 
+/*
+When site is reached, index.html is what is displayed.
+ */
 app.get('/', function (req, res) {
     res.sendfile(__dirname + '/client/index.html');
 });
+
+/*
+Allowing user access to the client folder so that resources can be pulled and used client-sided.
+ */
 app.use('/client', express.static(__dirname + '/client'));
-//process.env.PORT
+
+/*
+Listening either to the environment variable PORT if accessed online or port 2000 if accessed locally.
+ */
 serv.listen(process.env.PORT || 2000);
 console.log("Server started");
 
-// tmx.parse('/client/img/map.tmx', function (err, map) {
-//     if (err) throw err;
-//     console.log(map);
-// });
-
 var socketList = {};
-var messageList = {};
-var Message = function (id, name, content) {
-    var self = {
-        id: self.id,
-        name: self.name,
-        content: content
-    };
-    self.getMessagePack = function () {
-        return {
-            id: self.id,
-            name: self.name,
-            content: self.content
-        };
-    };
-};
 
+/*
+The template for a Box object that moves across the screen and is meant to be dodged by the player.
+ */
 var Box = function (id) {
     var self = {
         x: 1100,
@@ -193,11 +190,22 @@ Box.update = function () {
     }
     return pack;
 };
-var DEBUG = true;
+
+/*
+Requiring socketio for communication between client and server.
+ */
 var io = require('socket.io')(serv, {});
+
+/*
+While connected, specific actions can be performed.
+ */
 io.sockets.on('connection', function (socket) {
     socket.id = Math.random();
     socketList[socket.id] = socket;
+    /*
+    When trying to sign-in, checks if the name is too big or is non-existent.
+    Sends a message back if the name is non-compliant.
+     */
     socket.on('signIn', function (data) {
         if (data.displayName.length === 0) {
             socket.emit('signInResponse', {success: false, tooBig: false});
@@ -210,19 +218,30 @@ io.sockets.on('connection', function (socket) {
         Player.onConnect(socket, data.displayName);
         socket.emit('signInResponse', {success: true});
     });
+
+    /*
+    When disconnected, client sends a message to the server, which removes the player accordingly.
+     */
     socket.on('disconnect', function () {
         delete socketList[socket.id];
         Player.onDisconnect(socket);
     });
-    socket.on('evalServer', function (data) {
-        if (!DEBUG)  return;
-        socket.emit('evalAnswer', eval(data));
-    });
 });
 
+/*
+The initial pack to be sent to the client.
+ */
 var initPack = {player: [], box: []};
+
+/*
+The pack to be used to remove elements.
+ */
 var removePack = {player: []};
 
+/*
+Server's grand loop.
+Packs information into variables to be sent to the client.
+ */
 setInterval(function () {
     var playerPack = Player.update();
     var boxPack = Box.update();

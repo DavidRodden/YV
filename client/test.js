@@ -1,12 +1,25 @@
+/**
+ * Client Javascript portion:
+ * Speaking to the server using socketIo
+ * An 'emit' initiates the communication
+ * whereas an 'on' listens for a specific emit message
+ */
 var socket = io();
 var signDiv = document.getElementById('signDiv');
 var signDivDisplayName = document.getElementById('signDiv-displayName');
 var signDivSignIn = document.getElementById('signDiv-signIn');
 var gameDiv = document.getElementById('gameDiv');
 
+/*
+ Checks whether a valid display name has been entered communicates with the server accordingly
+ */
 signDivSignIn.onclick = function () {
     socket.emit('signIn', {displayName: signDivDisplayName.value});
 };
+
+/*
+ If the sign-in is a success, the user is presented with the game.
+ */
 socket.on('signInResponse', function (data) {
     if (!data.success) {
         if (data.tooBig)alert("Your name is too large...");
@@ -29,8 +42,21 @@ Img.online.src = '/client/img/users_online.png';
 Img.topBanner = new Image();
 Img.topBanner.src = '/client/img/top_banner.png';
 
+/*
+ Initialization of the canvas in which the game is drawn.
+ */
 var ctx = document.getElementById("ctx").getContext("2d");
+
+/*
+ The total time running client-side.
+ Used to display the ground and background images running alongside.
+ */
 var timeRunning = 0;
+
+/*
+ Template for a standard Box object.
+ On creation, many variables such as x,y position are initialized as well as functions to be used.
+ */
 var Box = function (initPack) {
     var self = {};
     self.id = initPack.id;
@@ -39,6 +65,9 @@ var Box = function (initPack) {
     self.y = initPack.y;
     self.height = initPack.height;
     self.width = initPack.width;
+    /*
+     Drawing function for the Box object. Displays it on the canvas when invoked.
+     */
     self.draw = function () {
         ctx.globalAlpha = 0.7;
         ctx.fillStyle = self.color;
@@ -61,7 +90,14 @@ var Box = function (initPack) {
     Box.list[self.id] = self;
     return self;
 };
+/*
+ Records a list of all currently existing Box objects.
+ */
 Box.list = {};
+
+/*
+ Template for a standard Player object. This is the lifeblood of all users.
+ */
 var Player = function (initPack) {
     var self = {};
     self.id = initPack.id;
@@ -69,7 +105,16 @@ var Player = function (initPack) {
     self.y = initPack.y;
     self.name = initPack.name;
     self.color = initPack.color;
+    /*
+     Score used to determine the ranks of all players.
+     */
     self.score = 0;
+
+    /*
+     Drawing function for the Player object.
+     Current player is given full opacity and is outlined in yellow whereas other players are given half opacity and are outlined in pink.
+     This is purely to allow the player to be able to distinguish himself from others.
+     */
     self.draw = function () {
         if (self.id != selfId) {
             ctx.globalAlpha = 0.5;
@@ -100,10 +145,21 @@ var Player = function (initPack) {
     Player.list[self.id] = self;
     return self;
 };
+/*
+Records a list of all currently existing Player objects.
+ */
 Player.list = {};
 
+/*
+The id of the player interacting with the client.
+Used to distinguish the interacting player from other players.
+ */
 var selfId = null;
 
+/*
+Action committed client-side when the server communicates to it.
+Initializes the player.
+ */
 socket.on('init', function (data) {
     if (data.selfId) selfId = data.selfId;
     console.log("Player length: " + data.length + " or " + data.player.length);
@@ -113,6 +169,9 @@ socket.on('init', function (data) {
     }
 });
 
+/*
+Server communication to client every so-often to update the player's values and running time.
+ */
 socket.on('updatePlayer', function (data) {
     for (var i = 0; i < data.length; i++) {
         var pack = data[i];
@@ -126,6 +185,9 @@ socket.on('updatePlayer', function (data) {
     if (timeRunning % 160 == 0) socket.emit('updateScore');
 });
 
+/*
+Server-side communication to client to update the box so that it moves along the canvas and for player hit-detection.
+ */
 socket.on('updateBox', function (data) {
     for (var i = 0; i < data.length; i++) {
         var pack = data[i];
@@ -142,10 +204,18 @@ socket.on('updateBox', function (data) {
 
     }
 });
+
+/*
+Removes the player from the player list when a user decides to unfortunately quit the game.
+ */
 socket.on('remove', function (data) {
     for (var i = 0; i < data.player.length; i++) delete Player.list[data.player[i]];
 });
 
+/*
+The grand client-side loop.
+Draws everything needed on the canvas.
+ */
 setInterval(function () {
     ctx.clearRect(0, 0, 1000, 500);
     ctx.fillStyle = '#e2edff';
@@ -197,9 +267,9 @@ setInterval(function () {
 
 }, 40);
 
-socket.on('evalAnswer', function (data) {
-    console.log(data);
-});
+/*
+Events sent to server when arrow keys are pressed client-side so that the player moves accordingly.
+ */
 document.onkeydown = function (event) {
     if (event.keyCode === 39)
         socket.emit('keyPress', {inputId: 'right', state: true});
