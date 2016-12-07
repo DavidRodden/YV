@@ -3,11 +3,7 @@ var signDiv = document.getElementById('signDiv');
 var signDivDisplayName = document.getElementById('signDiv-displayName');
 var signDivSignIn = document.getElementById('signDiv-signIn');
 var gameDiv = document.getElementById('gameDiv');
-var Message = function (initPack) {
-    var self = {};
 
-};
-Message.list = {};
 signDivSignIn.onclick = function () {
     socket.emit('signIn', {displayName: signDivDisplayName.value});
 };
@@ -35,6 +31,37 @@ Img.topBanner.src = '/client/img/top_banner.png';
 
 var ctx = document.getElementById("ctx").getContext("2d");
 var timeRunning = 0;
+var Box = function (initPack) {
+    var self = {};
+    self.id = initPack.id;
+    self.color = initPack.color;
+    self.x = initPack.x;
+    self.y = initPack.y;
+    self.height = initPack.height;
+    self.width = initPack.width;
+    self.draw = function () {
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = self.color;
+        var x = self.x - 20, y = self.y - self.height + 30, width = self.width, height = self.height, radius = 5;
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    };
+    Box.list[self.id] = self;
+    return self;
+};
+Box.list = {};
 var Player = function (initPack) {
     var self = {};
     self.id = initPack.id;
@@ -44,6 +71,11 @@ var Player = function (initPack) {
     self.color = initPack.color;
     self.score = 0;
     self.draw = function () {
+        if (self.id != selfId) {
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = '#ff5ef6';
+        } else
+            ctx.strokeStyle = 'yellow';
         ctx.fillStyle = self.color;
         var x = self.x - 20, y = self.y - 30, width = 40, height = 60, radius = 5;
         ctx.beginPath();
@@ -63,6 +95,7 @@ var Player = function (initPack) {
         ctx.fillStyle = 'blue';
         var nameSize = ctx.measureText(self.name);
         ctx.fillText(self.name, self.x - nameSize.width / 2, self.y + 60);
+        ctx.globalAlpha = 1;
     };
     Player.list[self.id] = self;
     return self;
@@ -90,12 +123,23 @@ socket.on('updatePlayer', function (data) {
         if (pack.score !== undefined)    p.score = pack.score;
     }
     timeRunning += 8;
+    if (timeRunning % 160 == 0) socket.emit('updateScore');
 });
 
 socket.on('updateBox', function (data) {
     for (var i = 0; i < data.length; i++) {
         var pack = data[i];
-        console.log("boxxess");
+        new Box(pack);
+        var currentPlayer = Player.list[selfId];
+        var currentBox = Box.list[pack.id];
+        if (currentPlayer == null)  return;
+        if (currentPlayer.x >= (currentBox.x - 40) && currentPlayer.x <= (currentBox.x + currentBox.width) && (currentPlayer.y >= currentBox.y - currentBox.height + 30) && currentPlayer.y <= (currentBox.y + 30))
+            socket.emit('touchBox');
+        if (Box.list[pack.id].x < -Box.list[pack.id].width) {
+            delete Box.list[pack.id];
+            socket.emit('deleteBox', {boxId: pack.id});
+        }
+
     }
 });
 socket.on('remove', function (data) {
@@ -115,7 +159,7 @@ setInterval(function () {
     ctx.closePath();
     ctx.stroke();
     ctx.drawImage(Img.background, 0 - (timeRunning / 6) % 758, -215, 2104, 600);
-    ctx.drawImage(Img.grassTiles, 0 - timeRunning % 70, 380);
+    ctx.drawImage(Img.grassTiles, 0 - (timeRunning / 1.5) % 70, 380);
     ctx.drawImage(Img.online, 5, 465, 30, 30);
     ctx.fillText(Object.keys(Player.list).length, 38, 487);
     ctx.drawImage(Img.topBanner, 750, 5, 240, 50);
@@ -146,6 +190,9 @@ setInterval(function () {
                 ctx.fillStyle = color;
             }
         }
+    }
+    for (var b in Box.list) {
+        Box.list[b].draw();
     }
 
 }, 40);

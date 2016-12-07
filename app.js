@@ -35,30 +35,44 @@ var Message = function (id, name, content) {
 
 var Box = function (id) {
     var self = {
-        x: 800,
-        y: 250,
-        xVelocity: -10,
+        x: 1100,
+        y: 350,
+        xVelocity: 5,
         yVelocity: 0,
+        height: Math.random() * 100 + 50,
+        width: Math.random() * 10 + 100,
         id: id,
         color: "#" + crypto.randomBytes(3).toString('hex')
     };
     self.updatePosition = function () {
         self.x -= self.xVelocity;
     };
+    self.getInitPack = function () {
+        return {
+            id: self.id,
+            color: self.color,
+            x: self.x,
+            y: self.y,
+            height: self.height,
+            width: self.width
+        };
+    };
     self.getUpdatePack = function () {
         return {
             id: self.id,
             color: self.color,
             x: self.x,
-            y: self.y
+            y: self.y,
+            height: self.height,
+            width: self.width
         };
-    }
+    };
     Box.list[id] = self;
     initPack.box.push(self.getInitPack());
     return self;
 };
-
 Box.list = {};
+
 var Player = function (id, name) {
     var self = {
         x: 250,
@@ -92,7 +106,6 @@ var Player = function (id, name) {
         if (self.x <= 20 && self.xVelocity < 0)  self.xVelocity = 0;
         self.x += self.xVelocity;
         self.y += self.yVelocity;
-        if (self.yVelocity != 0)    self.score++;//score increase for testing pursposes
     };
     self.getInitPack = function () {
         return {
@@ -131,6 +144,15 @@ Player.onConnect = function (socket, name) {
         else if (data.inputId === 'down')
             player.pressingDown = data.state;
     });
+    socket.on('updateScore', function () {
+        player.score = Math.floor(player.score * 1.1) + 1;
+    });
+    socket.on('deleteBox', function (data) {
+        delete Box.list[data.boxId];
+    });
+    socket.on('touchBox', function () {
+        player.score = 0;
+    });
     socket.emit('init', {
         selfId: socket.id,
         player: Player.getAllInitPack()
@@ -154,12 +176,20 @@ Player.update = function () {
     }
     return pack;
 };
+Box.create = function () {
+    var players = Object.keys(Player.list).length;
+    if (players > 50)    players = 50;
+    if (Math.floor(Math.random() * (200 - players)) == 0) {
+        Box(Math.random());
+    }
+};
 Box.update = function () {
+    Box.create();
     var pack = [];
     for (var i in Box.list) {
         var box = Box.list[i];
         box.updatePosition();
-        box.push(box.getUpdatePack());
+        pack.push(box.getUpdatePack());
     }
     return pack;
 };
