@@ -62,7 +62,7 @@ Box.list = {};
 var Player = function (id, name) {
     var self = {
         x: 250,
-        y: 250,
+        y: 350,
         xVelocity: 0,
         yVelocity: 0,
         maxXVelocity: 10,
@@ -85,9 +85,9 @@ var Player = function (id, name) {
         }
         if (!(self.pressingRight || self.pressingLeft) || (self.pressingRight && self.xVelocity < 0) || (self.pressingLeft && self.xVelocity > 0))
             self.xVelocity += (self.xVelocity > 0) ? -self.xAcceleration : (self.xVelocity < 0) ? self.xAcceleration : 0;
-        if (self.y < 250)  self.yVelocity += self.yAcceleration;
+        if (self.y < 350)  self.yVelocity += self.yAcceleration;
         else self.yVelocity = 0;
-        if (self.pressingUp && self.yVelocity == 0 && self.y >= 250) self.yVelocity -= self.maxYVelocity;
+        if (self.pressingUp && self.yVelocity == 0 && self.y >= 350) self.yVelocity -= self.maxYVelocity;
         if (self.x >= 980 && self.xVelocity > 0) self.xVelocity = 0;
         if (self.x <= 20 && self.xVelocity < 0)  self.xVelocity = 0;
         self.x += self.xVelocity;

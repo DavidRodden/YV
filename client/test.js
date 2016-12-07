@@ -24,6 +24,14 @@ socket.on('signInResponse', function (data) {
 var Img = {};
 Img.grassTiles = new Image();
 Img.grassTiles.src = '/client/img/grassTiles.png';
+Img.winnerCrown = new Image();
+Img.winnerCrown.src = '/client/img/crown.png';
+Img.background = new Image();
+Img.background.src = '/client/img/background.png';
+Img.online = new Image();
+Img.online.src = '/client/img/users_online.png';
+Img.topBanner = new Image();
+Img.topBanner.src = '/client/img/top_banner.png';
 
 var ctx = document.getElementById("ctx").getContext("2d");
 var timeRunning = 0;
@@ -100,18 +108,19 @@ setInterval(function () {
     ctx.fillRect(0, 0, 1000, 500);
     ctx.font = '15px Verdana';
     ctx.fillStyle = "black";
-    ctx.fillText("Current players online: " + Object.keys(Player.list).length, 20, 20);
     ctx.font = '20px Courier New Italic';
     ctx.beginPath();
-    ctx.moveTo(0, 280);
-    ctx.lineTo(1000, 280);
+    ctx.moveTo(0, 380);
+    ctx.lineTo(1000, 380);
     ctx.closePath();
     ctx.stroke();
-    ctx.drawImage(Img.grassTiles, 0 - timeRunning % 70, 280);
-    ctx.fillText("Top Current Players:", 750, 20);
+    ctx.drawImage(Img.background, 0 - (timeRunning / 6) % 758, -215, 2104, 600);
+    ctx.drawImage(Img.grassTiles, 0 - timeRunning % 70, 380);
+    ctx.drawImage(Img.online, 5, 465, 30, 30);
+    ctx.fillText(Object.keys(Player.list).length, 38, 487);
+    ctx.drawImage(Img.topBanner, 750, 5, 240, 50);
     var topPlayers = [];
     for (var current in Player.list) {
-        Player.list[current].draw();
         topPlayers.push(Player.list[current]);
     }
     topPlayers.sort(function (a, b) {
@@ -119,10 +128,24 @@ setInterval(function () {
         if (scoreEqual)  return a.name > b.name;
         else return a.score < b.score;
     });
+    for (var current in topPlayers) {
+        topPlayers[current].draw();
+        if (current == 0)ctx.drawImage(Img.winnerCrown, topPlayers[current].x - 15, topPlayers[current].y - 60);
+    }
     var iterator = 0;
     for (var current in topPlayers) {
         iterator++;
-        if (current < 5) ctx.fillText(iterator + ". " + topPlayers[current].name + ":\t\t" + topPlayers[current].score, 750, (iterator * 17) + 25);
+        if (current < 3) {
+            var color;
+            if (current == 0)    color = 'yellow';
+            else if (current == 1) color = '#edebe8';
+            else if (current == 2) color = '#473f2a';
+            ctx.fillStyle = 'black';
+            for (var i = 0; i < 2; i++) {
+                ctx.fillText(iterator + ". " + topPlayers[current].name + ":\t\t" + topPlayers[current].score, 770, (iterator * 20) + 60 - i);
+                ctx.fillStyle = color;
+            }
+        }
     }
 
 }, 40);
