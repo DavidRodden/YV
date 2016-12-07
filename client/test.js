@@ -13,7 +13,8 @@ signDivSignIn.onclick = function () {
 };
 socket.on('signInResponse', function (data) {
     if (!data.success) {
-        alert("You must fill out a name before continuing...");
+        if (data.tooBig)alert("Your name is too large...");
+        else alert("You must fill out a name before continuing...");
         return;
     }
     signDiv.style.display = 'none';
@@ -84,7 +85,7 @@ socket.on('updatePlayer', function (data) {
 });
 
 socket.on('updateBox', function (data) {
-    for(var i = 0; i < data.length; i++){
+    for (var i = 0; i < data.length; i++) {
         var pack = data[i];
         console.log("boxxess");
     }

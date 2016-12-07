@@ -170,7 +170,11 @@ io.sockets.on('connection', function (socket) {
     socketList[socket.id] = socket;
     socket.on('signIn', function (data) {
         if (data.displayName.length === 0) {
-            socket.emit('signInResponse', {success: false});
+            socket.emit('signInResponse', {success: false, tooBig: false});
+            return;
+        }
+        if (data.displayName.length > 15) {
+            socket.emit('signInResponse', {success: false, tooBig: true});
             return;
         }
         Player.onConnect(socket, data.displayName);
